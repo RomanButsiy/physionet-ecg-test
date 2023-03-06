@@ -111,9 +111,9 @@ env.bak/
 venv.bak/
 
 # Data
-#ECG_IEEE_Access_2022/
-#fr-img/
-#img/
+ECG_IEEE_Access_2022/
+fr-img/
+img/
 
 # Spyder project settings
 .spyderproject
