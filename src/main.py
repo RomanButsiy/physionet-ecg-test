@@ -1,9 +1,12 @@
 import wfdb
 import pandas as pd
 import numpy as np
+import neurokit2 as nk
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 from common.logs.log import get_logger
+from toCSV import To_CSV as toCSV
+from plot_to_file import Plot_To_File as plotToFile
 
 logger = get_logger('Main')
 
@@ -11,6 +14,7 @@ sig_name = 1
 file_mame = "b001"
 data_path = f'ECG_IEEE_Access_2022/dat/{file_mame}'
 fr_path = f'ECG_IEEE_Access_2022/fr/{file_mame}'
+m_path = f'm-file/{file_mame}'
 
 def get_new_matrix(matrix, k = 1):
     n = 0
@@ -18,42 +22,6 @@ def get_new_matrix(matrix, k = 1):
         n = n + len(matrix[i])
     n = int((n / len(matrix)) * k)
     return n
-
-def plot_to_file(plot1, name, xlim = None, ylim = None, path = "img", ytext="", xtext="", sampling_rate=5000, size=(10, 6)):
-    plt.clf()
-    plt.rcParams.update({'font.size': 14})
-    f, axis = plt.subplots(1)
-    f.tight_layout()
-    f.set_size_inches(size[0], size[1])
-    axis.grid(True)
-    time = np.arange(0, len(plot1), 1) / sampling_rate
-    axis.plot(time, plot1, linewidth=3)
-    axis.set_xlabel(xtext, loc = 'right')
-    axis.legend([ytext], loc='lower right')
-    if xlim is not None:
-        axis.axis(xmin = xlim[0], xmax = xlim[1])
-    if ylim is not None:
-        axis.axis(ymin = ylim[0], ymax = ylim[1])
-    plt.savefig("{}/{}.png".format(path, name), dpi=300)
-    return
-
-def fft_plot_to_file(plot1, plot2, name, xlim = None, ylim = None, path = "img/fft", ytext="", xtext="", size=(10, 6)):
-    plt.clf()
-    plt.rcParams.update({'font.size': 14})
-    f, axis = plt.subplots(1)
-    f.tight_layout()
-    f.set_size_inches(size[0], size[1])
-    axis.grid(True)
-    axis.stem(plot1, plot2, markerfmt=" ")
-    axis.set_xlabel(xtext, loc = 'right')
-    axis.set_title(ytext, loc = 'left', fontsize=10, position=(-0.07, 0))
-    # axis.legend([ytext], loc='right')
-    if xlim is not None:
-        axis.axis(xmin = xlim[0], xmax = xlim[1])
-    if ylim is not None:
-        axis.axis(ymin = ylim[0], ymax = ylim[1])
-    plt.savefig("{}/{}.png".format(path, name), dpi=300)
-    return
 
 def get_all_matrix(input_matrix, matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate):
     activity = input_matrix[:matrix_activity_size]
@@ -78,7 +46,6 @@ def fft(i, fs):
     yi = np.fft.fft(i)
     y = yi[range(int(L / 2))]
     return freq, abs(y) / fs
-    
 
 if __name__ == '__main__':
     logger.info("Read physionet file")
@@ -112,6 +79,8 @@ if __name__ == '__main__':
 
     matrix_passivity_size = get_new_matrix(matrix_passivity)
     matrix_activity_size = get_new_matrix(matrix_activity)
+    print(matrix_activity_size)
+    print(matrix_passivity_size)
     # matrix_passivity_size = len(matrix_passivity[0])
     # matrix_activity_size = len(matrix_activity[0])
 
@@ -183,52 +152,84 @@ if __name__ == '__main__':
     #Початковий момент четвертого порядку
     m__4_all = get_all_matrix(m__4[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
 
+    ptf = plotToFile()
+
     size = (19, 6)
     xlim = (0, 20)
     xtext = "$f, Hz$"
 
-    fft_plot_to_file(*fft(m_all[:100000], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_all[:100000], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
 
-    fft_plot_to_file(*fft(m_2_all[:100000], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_2_all[:100000], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
 
-    fft_plot_to_file(*fft(m_3_all[:100000], sampling_rate), "Початковий момент третього порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^3 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_3_all[:100000], sampling_rate), "Початковий момент третього порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^3 / Hz$", size=size, xlim=xlim)
 
-    fft_plot_to_file(*fft(m_4_all[:100000], sampling_rate), "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_4_all[:100000], sampling_rate), "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
 
-    fft_plot_to_file(*fft(m__2_all[:100000], sampling_rate), "Центральний момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m__2_all[:100000], sampling_rate), "Центральний момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
 
-    fft_plot_to_file(*fft(m__4_all[:100000], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m__4_all[:100000], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
+
+    size = (19, 6)
+    xlim = (0, 80)
+    
+    ptf.fft_plot_to_file(*fft(m_[0], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
+
+    ptf.fft_plot_to_file(*fft(m_2_[0], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
+
+    ptf.fft_plot_to_file(*fft(m_3_[0], sampling_rate), "Початковий момент третього порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^3 / Hz$", size=size, xlim=xlim)
+
+    ptf.fft_plot_to_file(*fft(m_4_[0], sampling_rate), "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
+
+    ptf.fft_plot_to_file(*fft(m__2[0], sampling_rate), "Центральний момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
+
+    ptf.fft_plot_to_file(*fft(m__4[0], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
 
 
     size = (19, 6)
     xlim = (0, 6)
     xtext = "$t, s$"
 
-    # plot_to_file(m_all[:100000], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$", size=size, xlim=xlim)
+    # ptf.plot_to_file(m_all[:100000], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$", size=size, xlim=xlim)
 
-    # plot_to_file(m_2_all[:100000], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$", size=size, xlim=xlim)
+    # ptf.plot_to_file(m_2_all[:100000], "Початковий момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$", size=size, xlim=xlim)
 
-    # plot_to_file(m_3_all[:100000], sampling_rate), "Початковий момент третього порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^3$", size=size, xlim=xlim)
+    # ptf.plot_to_file(m_3_all[:100000], "Початковий момент третього порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^3$", size=size, xlim=xlim)
 
-    # plot_to_file(m_4_all[:100000], sampling_rate), "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$", size=size, xlim=xlim)
+    # ptf.plot_to_file(m_4_all[:100000], "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$", size=size, xlim=xlim)
 
-    # plot_to_file(m__2_all[:100000], sampling_rate), "Центральний момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$", size=size, xlim=xlim)
+    # ptf.plot_to_file(m__2_all[:100000], "Центральний момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$", size=size, xlim=xlim)
 
-    # plot_to_file(m__4_all[:100000], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$", size=size, xlim=xlim)
+    # ptf.plot_to_file(m__4_all[:100000], "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$", size=size, xlim=xlim)
 
 
-    # plot_to_file(m_[0], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$")
+    # ptf.plot_to_file(m_[0], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$")
 
-    # plot_to_file(m_2_[0], "Початковий момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$")
+    # ptf.plot_to_file(m_2_[0], "Початковий момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$")
 
-    # plot_to_file(m_3_[0], "Початковий момент третього порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^3$")
+    # ptf.plot_to_file(m_3_[0], "Початковий момент третього порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^3$")
 
-    # plot_to_file(m_4_[0], "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$")
+    # ptf.plot_to_file(m_4_[0], "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$")
 
-    # plot_to_file(m__2[0], "Центральний момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$")
+    # ptf.plot_to_file(m__2[0], "Центральний момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$")
 
-    # plot_to_file(m__4[0], "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$")
+    # ptf.plot_to_file(m__4[0], "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$")
 
+    # dataToFile = toCSV(m_path, fileds, sig_name)
+
+    # dataToFile.toFile(m_[0], "Математичне сподівання")
+    # dataToFile.toFile(m_2_[0], "Початковий момент другого порядку")
+    # dataToFile.toFile(m_3_[0], "Початковий момент третього порядку")
+    # dataToFile.toFile(m_4_[0], "Початковий момент четвертого порядку")
+    # dataToFile.toFile(m__2[0], "Центральний момент другого порядку")
+    # dataToFile.toFile(m__4[0], "Центральний момент четвертого порядку")
+
+    # dataToFile.toFile(m_all[:100000], "20s Математичне сподівання")
+    # dataToFile.toFile(m_2_all[:100000], "20s Початковий момент другого порядку")
+    # dataToFile.toFile(m_3_all[:100000], "20s Початковий момент третього порядку")
+    # dataToFile.toFile(m_4_all[:100000], "20s Початковий момент четвертого порядку")
+    # dataToFile.toFile(m__2_all[:100000], "20s Центральний момент другого порядку")
+    # dataToFile.toFile(m__4_all[:100000], "20s Центральний момент четвертого порядку")
 
 
     # time = np.arange(0, len(signals_T[sig_name]), 1) / sampling_rate

@@ -82,6 +82,9 @@ if __name__ == '__main__':
             break
         T1_Y.append(T1_D_z[i])
 
+
+    # T1_Y = list(map(lambda x: x - 0.9104, T1_Y))
+
     plt.clf()
     plt.rcParams.update({'font.size': 14})
     f, axis = plt.subplots(1)
@@ -91,6 +94,6 @@ if __name__ == '__main__':
     axis.plot(T1_X, T1_Y, linewidth=3)
     axis.set_xlabel("$t, s$", loc = 'right')
     axis.legend(['$T(t, 1), s$'])
-    axis.axis(ymin = 0, ymax = 1.2)
+    axis.axis(ymin = -0.2, ymax = 1.2)
     axis.axis(xmin = 0, xmax = 272)
     plt.savefig(f'fr-img/FR_{file_mame}_{fileds["sig_name"][sig_name]}.png', dpi=300)
