@@ -1,3 +1,4 @@
+import itertools
 import wfdb
 import pandas as pd
 import numpy as np
@@ -8,6 +9,10 @@ from common.logs.log import get_logger
 from toCSV import To_CSV as toCSV
 from plot_to_file import Plot_To_File as plotToFile
 
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
+
 logger = get_logger('Main')
 
 sig_name = 1
@@ -16,7 +21,7 @@ data_path = f'ECG_IEEE_Access_2022/dat/{file_mame}'
 fr_path = f'ECG_IEEE_Access_2022/fr/{file_mame}'
 m_path = f'm-file/{file_mame}'
 
-def get_new_matrix(matrix, k = 1):
+def get_new_matrix(matrix, k = 0.2):
     n = 0
     for i in range(len(matrix)):
         n = n + len(matrix[i])
@@ -79,8 +84,6 @@ if __name__ == '__main__':
 
     matrix_passivity_size = get_new_matrix(matrix_passivity)
     matrix_activity_size = get_new_matrix(matrix_activity)
-    print(matrix_activity_size)
-    print(matrix_passivity_size)
     # matrix_passivity_size = len(matrix_passivity[0])
     # matrix_activity_size = len(matrix_activity[0])
 
@@ -119,40 +122,96 @@ if __name__ == '__main__':
     #Початковий момент четвертого порядку
     m__4 = []
 
-    interp_matrix_T = [[interp_matrix_all[j][i] for j in range(len(interp_matrix_all))] for i in range(len(interp_matrix_all[0]))]
-
-    # #Математичне сподівання
-    m_.append([sum(i) / len(i) for i in interp_matrix_T])
-
-    # #Початковий момент другого порядку
-    m_2_.append([np.sum(np.array(i)**2) / len(i) for i in interp_matrix_T])
-
-    # #Початковий момент третього порядку
-    m_3_.append([np.sum(np.array(i)**3) / len(i) for i in interp_matrix_T])
-            
-    # #Початковий момент четвертого порядку
-    m_4_.append([np.sum(np.array(i)**4) / len(i) for i in interp_matrix_T])
-
-    #Центральний момент другого порядку
-    m__2.append([sum((interp_matrix_T[i] - m_[0][i])**2) / len(interp_matrix_T[i]) for i in range(len(m_[0]))])
-
-    # #Центральний момент четвертого порядку
-    m__4.append([sum((interp_matrix_T[i] - m_[0][i])**4) / len(interp_matrix_T[i]) for i in range(len(m_[0]))])
+    interp_matrix_T = interp_matrix_all.transpose()
 
     #Математичне сподівання
-    m_all = get_all_matrix(m_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
-    #Початковий момент другого порядку
-    m_2_all = get_all_matrix(m_2_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
-    #Початковий момент третього порядку
-    m_3_all = get_all_matrix(m_3_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
-    #Початковий момент четвертого порядку
-    m_4_all = get_all_matrix(m_4_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
-    #Початковий момент другого порядку
-    m__2_all = get_all_matrix(m__2[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
-    #Початковий момент четвертого порядку
-    m__4_all = get_all_matrix(m__4[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+    m_.append([np.mean(i) for i in interp_matrix_T])
 
-    ptf = plotToFile()
+    # # #Початковий момент другого порядку
+    # m_2_.append([np.sum(np.array(i)**2) / len(i) for i in interp_matrix_T])
+
+    # # #Початковий момент третього порядку
+    # m_3_.append([np.sum(np.array(i)**3) / len(i) for i in interp_matrix_T])
+            
+    # # #Початковий момент четвертого порядку
+    # m_4_.append([np.sum(np.array(i)**4) / len(i) for i in interp_matrix_T])
+
+    # #Центральний момент другого порядку
+    # m__2.append([sum((interp_matrix_T[i] - m_[0][i])**2) / len(interp_matrix_T[i]) for i in range(len(m_[0]))])
+
+    # # #Центральний момент четвертого порядку
+    # m__4.append([sum((interp_matrix_T[i] - m_[0][i])**4) / len(interp_matrix_T[i]) for i in range(len(m_[0]))])
+
+    # #Математичне сподівання
+    # m_all = get_all_matrix(m_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+    # #Початковий момент другого порядку
+    # m_2_all = get_all_matrix(m_2_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+    # #Початковий момент третього порядку
+    # m_3_all = get_all_matrix(m_3_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+    # #Початковий момент четвертого порядку
+    # m_4_all = get_all_matrix(m_4_[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+    # #Початковий момент другого порядку
+    # m__2_all = get_all_matrix(m__2[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+    # #Початковий момент четвертого порядку
+    # m__4_all = get_all_matrix(m__4[0], matrix_activity_size, matrix_passivity_size, D_c, D_z, sampling_rate)
+
+    tmp = None
+    deep = 3
+    co = True
+
+    interp_matrix_all_len = len(interp_matrix_all)
+
+    for i in range(interp_matrix_all_len - deep + 1):
+        concated = np.ravel(interp_matrix_all[i: i + deep])
+        one = interp_matrix_all[i]
+        if co:
+            one = one - m_[0]
+            concated = concated - np.tile(m_[0], deep)
+
+        r1, r2 = np.meshgrid(one, concated)
+        r = r1 * r2
+        if tmp is None:
+            tmp = r
+        else:
+            tmp = tmp + r
+
+
+    res2 = tmp / (interp_matrix_all_len - deep + 1)
+
+    # res2 = np.concatenate((res, res), axis=1)
+
+    # print(len(res))
+
+    a = np.array([1, 2, 3, 4,5,6,7,8])
+    b = np.array([1, 2, 3, 4])
+    # print(a)
+
+    print(np.tile(b, 1))
+
+    # print(np.concatenate((a, a), axis=1))
+    # r1, r2 = np.meshgrid(time, time2)
+
+    # print(a)
+    # print(len(res[0]))
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+    fig.set_size_inches(10, 10, 10)
+
+    X = np.arange(0, len(res2[0]), 1) / 1000.0
+    Y = np.arange(0, len(res2), 1) / 1000.0
+    X, Y = np.meshgrid(X, Y)
+
+    # Plot the surface.
+    surf = ax.plot_surface(X, Y, res2, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0, vmin = -0.002, vmax = 0.002)
+
+    # ax.zaxis.set_major_formatter('{x:.02f}')
+
+    plt.gca().invert_xaxis()
+
+    plt.savefig("{}/{}.png".format("3d-img", "test2"), dpi=300)
+
+    ptf = plotToFile(sampling_rate = 1000)
 
     size = (19, 6)
     xlim = (0, 20)
@@ -173,17 +232,17 @@ if __name__ == '__main__':
     size = (19, 6)
     xlim = (0, 80)
     
-    ptf.fft_plot_to_file(*fft(m_[0], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_[0], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
 
-    ptf.fft_plot_to_file(*fft(m_2_[0], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_2_[0], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
 
-    ptf.fft_plot_to_file(*fft(m_3_[0], sampling_rate), "Початковий момент третього порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^3 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_3_[0], sampling_rate), "Початковий момент третього порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^3 / Hz$", size=size, xlim=xlim)
 
-    ptf.fft_plot_to_file(*fft(m_4_[0], sampling_rate), "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m_4_[0], sampling_rate), "Початковий момент четвертого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
 
-    ptf.fft_plot_to_file(*fft(m__2[0], sampling_rate), "Центральний момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m__2[0], sampling_rate), "Центральний момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
 
-    ptf.fft_plot_to_file(*fft(m__4[0], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
+    # ptf.fft_plot_to_file(*fft(m__4[0], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
 
 
     size = (19, 6)
@@ -203,7 +262,7 @@ if __name__ == '__main__':
     # ptf.plot_to_file(m__4_all[:100000], "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^4$", size=size, xlim=xlim)
 
 
-    # ptf.plot_to_file(m_[0], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$")
+    ptf.plot_to_file(m_[0], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$")
 
     # ptf.plot_to_file(m_2_[0], "Початковий момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$")
 

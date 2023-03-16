@@ -40,3 +40,7 @@ class Plot_To_File:
             axis.axis(ymin = ylim[0], ymax = ylim[1])
         plt.savefig("{}/{}.png".format(path, name), dpi=300)
         return
+    
+    def _3d_plot_to_file(self, plot1, name, xlim = None, ylim = None, path = "3d-img", ytext="", xtext="", size=(10, 6)):
+        #TODO:
+        return
