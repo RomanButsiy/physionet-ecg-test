@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.interpolate as interp
 
 class Helpers:
     def __init__(self, interp_matrix_all, mathematical_expectation, sampling_rate=5000):
@@ -51,9 +50,15 @@ class Helpers:
         
         return res2
 
-    def fft(i, sampling_rate):
+    def fft(self, i, sampling_rate):
         L = len(i)
         freq = np.linspace(0.0, 1.0 / (2.0 * sampling_rate **-1), L // 2)
         yi = np.fft.fft(i)
         y = yi[range(int(L / 2))]
-        return freq, abs(y) / sampling_rate
+        return freq, (abs(y) / sampling_rate)
+    
+    def tfft(self, i, sampling_rate):
+        L = len(i)
+        yi = np.fft.fft(i)
+        y = yi[range(int(L / 2))]
+        return (abs(y))

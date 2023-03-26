@@ -5,7 +5,6 @@ import numpy as np
 import neurokit2 as nk
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
-import scipy
 from common.logs.log import get_logger
 from toCSV import To_CSV as toCSV
 from plot_to_file import Plot_To_File as plotToFile
@@ -157,9 +156,28 @@ if __name__ == '__main__':
     hlp = myHelp(interp_matrix_all, m_, sampling_rate = sampling_rate)
     ptf = plotToFile(sampling_rate = sampling_rate)
 
+    # FT TEST
+    c1 = hlp.getCorrelation(correlation = True, deep = 3, multiply = True)
+
+    z = np.array([hlp.tfft(i, sampling_rate) for i in c1])
+    t2 = np.arange(0, len(z), 1) / sampling_rate
+    t1 = np.linspace(0.0, 1.0 / (2.0 * sampling_rate **-1), len(z[0]))
+
+    ptf.ft_3d_plot_to_file(z[:, :300], "Autocovariation FT1_d3_mt", t1[:300], t2,  path = "3d-img", size=(10, 10, 10), ztext=r'$\hat{R}_{2_{\xi}} (t_1, t_2), mV^2$', xtext='$f, Hz$')
+
+    c1_T = c1.transpose()
+    z = np.array([hlp.tfft(i, sampling_rate) for i in c1_T])
+    z = z.transpose()
+    t1 = np.arange(0, len(z[0]), 1) / sampling_rate
+    t2 = np.linspace(0.0, 1.0 / (2.0 * sampling_rate **-1), len(z))
+
+    ptf.ft_3d_plot_to_file(z[:300,], "Autocovariation FT2_d3_mt", t1, t2[:300],  path = "3d-img", size=(10, 10, 10), ztext=r'$\hat{R}_{2_{\xi}} (t_1, t_2), mV^2$', ytext='$f, Hz$')
+
+
+
     # Коваріація
-    # c1 = hlp.getCorrelation(correlation = False, deep = 3, multiply = True)
-    # ptf._3d_plot_to_file(c1, "Autocorrelation function", path = "3d-img", size=(10, 10, 10), correlation = False, v = (-0.02, 0.05), ztext=r'$\hat{R}_{2_{\xi}} (t_1, t_2), mV^2$')
+    # c1 = hlp.getCorrelation(correlation = False, deep = 1, multiply = False)
+    # ptf._3d_plot_to_file(c1, "Autocorrelation function", path = "3d-img", size=(10, 10, 10), v = (-0.02, 0.05), ztext=r'$\hat{R}_{2_{\xi}} (t_1, t_2), mV^2$')
 
     # Кореляція
     # c2 = hlp.getCorrelation(correlation = True, deep = 3, multiply = True)
@@ -211,9 +229,9 @@ if __name__ == '__main__':
     # ptf.fft_plot_to_file(*hlp.fft(m__4_all[:100000], sampling_rate), "Центральний момент четвертого порядку",  xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^4 / Hz$", size=size, xlim=xlim)
 
     size = (19, 6)
-    xlim = (0, 80)
+    xlim = (0, 100)
     
-    # ptf.fft_plot_to_file(*hlp.fft(m_[0], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
+    ptf.fft_plot_to_file(*hlp.fft(m_[0], sampling_rate), "Математичне сподівання", xtext=xtext, ytext=r"$S_{m_{{\xi}}} (f), mV / Hz$", size=size, xlim=xlim)
 
     # ptf.fft_plot_to_file(*hlp.fft(m_2_[0], sampling_rate), "Початковий момент другого порядку", xtext=xtext, ytext=r"$S_{d_{{\xi}}} (f), mV^2 / Hz$", size=size, xlim=xlim)
 
@@ -250,7 +268,7 @@ if __name__ == '__main__':
 
     # ptf.plot_to_file(m__2_all[:100000], "Central moment of the 2nd order", xtext=xtext, ytext=r"$\hat{d}_{2_{\xi_{\hat{T}_{av}}}} (t), mV^2$", size=size, xlim=xlim)
 
-    ptf.plot_to_file(m_[0], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$")
+    # ptf.plot_to_file(m_[0], "Математичне сподівання", xtext=xtext, ytext=r"$m_{{\xi}} (t), mV$")
 
     # ptf.plot_to_file(m_2_[0], "Початковий момент другого порядку", xtext=xtext, ytext=r"$d_{{\xi}} (t), mV^2$")
 

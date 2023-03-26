@@ -43,22 +43,42 @@ class Plot_To_File:
         plt.savefig("{}/{}.png".format(path, name), dpi=300)
         return
     
-    def _3d_plot_to_file(self, plot1, name, path = "3d-img", size=(10, 10, 10), correlation = False, ztext="", v = None):
+    def _3d_plot_to_file(self, plot1, name, path = "3d-img", size=(10, 10, 10), ztext="", v = None):
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
         fig.set_size_inches(size[0], size[1], size[2])
 
-        X = np.arange(0, len(plot1[0]), 1) / self.sampling_rate
-        Y = np.arange(0, len(plot1), 1) / self.sampling_rate
-        X, Y = np.meshgrid(X, Y)
+        t1 = np.arange(0, len(plot1[0]), 1) / self.sampling_rate
+        t2 = np.arange(0, len(plot1), 1) / self.sampling_rate
+        t1, t2 = np.meshgrid(t1, t2)
         ax.set_xlabel('$t_1, s$', fontsize=13)
         ax.set_ylabel('$t_2, s$', fontsize=13)
         ax.set_zlabel(ztext, fontsize=12)
         # Plot the surface.
-        if correlation:
-            surf = ax.plot_surface(X, Y, plot1, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0, vmin = v[0], vmax = v[1])
+        if v is None:
+            surf = ax.plot_surface(t1, t2, plot1, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0)
         else:
-            surf = ax.plot_surface(X, Y, plot1, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0, vmin = v[0], vmax = v[1])
+            surf = ax.plot_surface(t1, t2, plot1, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0, vmin = v[0], vmax = v[1])
+        # ax.zaxis.set_major_formatter('{x:.02f}')
+
+        plt.gca().invert_xaxis()
+        plt.savefig("{}/{}.png".format(path, name), dpi=300)
+        return
+    
+    def ft_3d_plot_to_file(self, plot1, name, t1_, t2_,  path = "3d-img", size=(10, 10, 10), ztext="", v = None, xtext = '$t_1, s$', ytext = '$t_2, s$'):
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+        fig.set_size_inches(size[0], size[1], size[2])
+
+        t1, t2 = np.meshgrid(t1_, t2_)
+        ax.set_xlabel(xtext, fontsize=13)
+        ax.set_ylabel(ytext, fontsize=13)
+        ax.set_zlabel(ztext, fontsize=12)
+        # Plot the surface.
+        if v is None:
+            surf = ax.plot_surface(t1, t2, plot1, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0)
+        else:
+            surf = ax.plot_surface(t1, t2, plot1, rstride=5,cstride=5,cmap=cm.coolwarm,linewidth=0, vmin = v[0], vmax = v[1])
         # ax.zaxis.set_major_formatter('{x:.02f}')
 
         plt.gca().invert_xaxis()
